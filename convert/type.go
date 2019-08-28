@@ -12,6 +12,42 @@ var (
 	ErrTypeNotSupported = errors.New("data type not supported")
 )
 
+func toInt64(value reflect.Value) (int64, error) {
+	switch f := value; f.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16,reflect.Int32,reflect.Int64:
+		return f.Int(), nil
+	case reflect.Uint,reflect.Uint8, reflect.Uint16,reflect.Uint32,reflect.Uint64:
+		return int64(f.Uint()), nil
+	case reflect.String:
+		s := f.String()
+		result, err := strconv.ParseInt(s, 10, 64)
+		return result, err
+	case reflect.Float32,reflect.Float64:
+		fv := f.Float()
+		return int64(fv), nil
+	case reflect.Bool:
+		b := f.Bool()
+		if b {
+			return 1, nil
+		} else {
+			return 0, nil
+		}
+	case reflect.Ptr:
+		return toInt64(f.Elem())
+	default:
+		return 0, ErrTypeNotSupported
+	}
+}
+
+// ToInt64 try to convert interface{} to int
+// ToInt64 accepts data like: int, *int, uint8, *uint8, string, bool, *string, *bool, float32, *float32 etc
+func ToInt64(data interface{}) (int64, error){
+	if data == nil {
+		return 0, ErrSourceDataNil
+	}
+	return toInt64(reflect.ValueOf(data))
+}
+
 func toInt(value reflect.Value) (int, error) {
 	switch f := value; f.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16,reflect.Int32,reflect.Int64:
